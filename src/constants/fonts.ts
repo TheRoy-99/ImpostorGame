@@ -1,5 +1,5 @@
 export const Fonts = {
-  display: 'Fraunces_700Bold',
-  body:    'DMSans_400Regular',
-  bodyBold:'DMSans_700Bold',
+  display:  'Fraunces_700Bold',
+  body:     'DMSans_400Regular',
+  bodyBold: 'DMSans_500Medium',
 };
