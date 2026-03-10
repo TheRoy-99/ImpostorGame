@@ -1,33 +1,26 @@
 {
   "expo": {
-    "name": "ImpostorApp",
-    "slug": "ImpostorApp",
+    "name": "Impostor",
+    "slug": "impostor-app",
+    "scheme": "impostor",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "platforms": ["ios", "android"],
+    "main": "expo-router/entry",
+    "icon": "./assets/images/icon.png",
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#FFF5F2"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": false
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
-      },
-      "predictiveBackGestureEnabled": false
-    },
-    "web": {
-      "favicon": "./assets/favicon.png"
-    },
-    "plugins": [
-      "expo-router"
-    ]
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#FFF5F2"
+      }
+    }
   }
 }
