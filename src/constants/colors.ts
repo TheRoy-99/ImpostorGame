@@ -1,0 +1,16 @@
+export const Colors = {
+  bg: "#FFF5F2",
+  card: "#FFFFFF",
+  salmon: "#FA8072",
+  salmonLight: "#FBBF99",
+  salmonDark: "#E8634E",
+  salmonPale: "#FDE8E0",
+  grayLight: "#F5EDE9",
+  white: "#FFFFFF",
+  text: "#2C1810",
+  textMid: "#7A5545",
+  textLight: "#BBA89E",
+  impostor: "#E8634E",
+  impostorBg: "#FFF0EE",
+  wordBg: "#FFF8F5",
+};
