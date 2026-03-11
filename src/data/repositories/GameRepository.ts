@@ -1,6 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Game } from "../../domain/entities";
-import { IGameRepository } from "../../domain/repositories/IGameRepository";
+import { IGameRepository } from "../../domain/repositories/GameRepository";
 import { StorageKeys } from "../storage/StorageKeys";
 
 export class GameRepository implements IGameRepository {
