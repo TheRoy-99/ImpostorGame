@@ -5,10 +5,10 @@
     "scheme": "impostor",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/Icon.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/Icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#FFF5F2"
     },
@@ -28,6 +28,11 @@
     },
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "27182487-eef8-4b68-9c49-e535e878bb70"
+      }
     }
   }
 }
