@@ -3,12 +3,13 @@
     "name": "Impostor RMR",
     "slug": "impostor-app",
     "scheme": "impostor",
+    "owner": "roy_m",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./src/assets/IconApp.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/icon.png",
+      "image": "./src/assets/IconApp.png",
       "resizeMode": "contain",
       "backgroundColor": "#FFF5F2"
     },
