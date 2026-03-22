@@ -8,7 +8,7 @@ export interface WordEntry {
   word: string;
 }
 
-export type Role = "word" | "impostor";
+export type Role = 'word' | 'impostor';
 
 export interface Assignment {
   player: Player;
@@ -21,4 +21,5 @@ export interface Game {
   assignments: Assignment[];
   numImpostors: number;
   createdAt: Date;
+  allWordsUsed?: boolean;
 }

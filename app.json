@@ -1,14 +1,14 @@
 {
   "expo": {
-    "name": "Impostor",
+    "name": "Impostor RMR",
     "slug": "impostor-app",
     "scheme": "impostor",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/Icon.png",
+    "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/Icon.png",
+      "image": "./assets/icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#FFF5F2"
     },

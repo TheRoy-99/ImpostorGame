@@ -4,169 +4,314 @@ import {
   StyleSheet,
   TouchableOpacity,
   Dimensions,
-  ScrollView,
-} from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  withTiming,
-} from 'react-native-reanimated';
-import { Colors } from '../../constants/colors';
-import { Fonts } from '../../constants/fonts';
-import { useGameStore } from '../../store/gameStore';
-import { SwipeCard } from '../../components/game/SwipeCard';
+  Animated,
+  Image
+} from 'react-native'
+import { LinearGradient } from 'expo-linear-gradient'
+import { router, useLocalSearchParams } from 'expo-router'
+import { useState, useRef, useEffect } from 'react'
+import { Ionicons } from '@expo/vector-icons'
+import { Colors } from '../../constants/colors'
+import { Fonts } from '../../constants/fonts'
+import { useGameStore } from '../../store/gameStore'
+import { SwipeCard } from '../../components/game/SwipeCard'
 
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+const { height: H } = Dimensions.get('window')
 
-export default function RevealScreen() {
-  const { idx } = useLocalSearchParams<{ idx: string }>();
-  const currentIdx = parseInt(idx ?? '0');
-  const { currentGame } = useGameStore();
-  const [revealed, setRevealed] = useState(false);
+const CHARACTERS = [
+  require('../../assets/characters/persona1.png'),
+  require('../../assets/characters/persona2.png'),
+  require('../../assets/characters/persona3.png'),
+  require('../../assets/characters/persona4.png'),
+  require('../../assets/characters/persona5.png')
+]
 
-  const resultOpacity = useSharedValue(0);
-  const resultTranslateY = useSharedValue(30);
+export default function RevealScreen () {
+  const { idx } = useLocalSearchParams<{ idx: string }>()
+  const currentIdx = parseInt(idx ?? '0')
+  const { currentGame } = useGameStore()
+  const [revealed, setRevealed] = useState(false)
 
-  if (!currentGame) { router.replace('/'); return null; }
+  const resultOpacity = useRef(new Animated.Value(0)).current
+  const resultTransY = useRef(new Animated.Value(20)).current
+  const btnOpacity = useRef(new Animated.Value(0)).current
+  const charOpacity = useRef(new Animated.Value(0)).current
 
-  const assignment = currentGame.assignments[currentIdx];
-  const numPlayers = currentGame.assignments.length;
-  const isLast = currentIdx + 1 >= numPlayers;
-  const isImpostor = assignment.role === 'impostor';
+  useEffect(() => {
+    if (!currentGame) router.replace('/')
+  }, [currentGame])
+
+  if (!currentGame) return null
+
+  const assignment = currentGame.assignments[currentIdx]
+  const total = currentGame.assignments.length
+  const isLast = currentIdx + 1 >= total
+  const isImpostor = assignment.role === 'impostor'
+  const character = CHARACTERS[currentIdx % CHARACTERS.length]
 
   const handleReveal = () => {
-    setRevealed(true);
-    resultOpacity.value = withTiming(1, { duration: 400 });
-    resultTranslateY.value = withSpring(0, { damping: 15, stiffness: 100 });
-  };
-
-  const resultStyle = useAnimatedStyle(() => ({
-    opacity: resultOpacity.value,
-    transform: [{ translateY: resultTranslateY.value }],
-  }));
+    setRevealed(true)
+    Animated.sequence([
+      Animated.parallel([
+        Animated.timing(charOpacity, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true
+        }),
+        Animated.timing(resultOpacity, {
+          toValue: 1,
+          duration: 400,
+          useNativeDriver: true
+        }),
+        Animated.spring(resultTransY, {
+          toValue: 0,
+          useNativeDriver: true,
+          bounciness: 5
+        })
+      ]),
+      Animated.timing(btnOpacity, {
+        toValue: 1,
+        duration: 250,
+        useNativeDriver: true
+      })
+    ]).start()
+  }
 
   const handleNext = () => {
-    if (isLast) router.push('/end-round');
-    else router.push(`/reveal/${currentIdx + 1}`);
-  };
+    if (isLast) router.push('/end-round')
+    else router.push(`/reveal/${currentIdx + 1}` as any) // ← directo, sin pass-reveal
+  }
 
   return (
     <View style={styles.container}>
+      {/* Personaje de fondo al revelar */}
+      {revealed && (
+        <Animated.View style={[styles.bgCharacter, { opacity: charOpacity }]}>
+          <Image source={character} style={styles.bgCharacterImage} />
+          {/* Gradiente encima del personaje */}
+          <LinearGradient
+            colors={[
+              'rgba(10,15,30,0.3)',
+              'rgba(10,15,30,0.5)',
+              isImpostor ? 'rgba(239,68,68,0.15)' : 'rgba(124,58,237,0.15)',
+              'rgba(10,15,30,0.95)'
+            ]}
+            locations={[0, 0.3, 0.6, 1]}
+            style={StyleSheet.absoluteFill}
+          />
+        </Animated.View>
+      )}
+
       {/* Header */}
       <View style={styles.header}>
-        <View>
-          <Text style={styles.headerLabel}>Turno de</Text>
-          <Text style={styles.headerName}>{assignment.player.name}</Text>
-        </View>
-        <View style={styles.counter}>
-          <Text style={styles.counterText}>{currentIdx + 1} / {numPlayers}</Text>
+        <Text style={styles.greeting}>Hola, {assignment.player.name}</Text>
+        <View style={styles.dots}>
+          {Array.from({ length: total }).map((_, i) => (
+            <View
+              key={i}
+              style={[
+                styles.dot,
+                i === currentIdx && styles.dotActive,
+                i < currentIdx && styles.dotDone
+              ]}
+            />
+          ))}
         </View>
       </View>
 
-      {/* Progress dots */}
-      <View style={styles.dots}>
-        {Array.from({ length: numPlayers }).map((_, i) => (
+      {/* Resultado revelado */}
+      {revealed && (
+        <Animated.View
+          style={[
+            styles.resultZone,
+            {
+              opacity: resultOpacity,
+              transform: [{ translateY: resultTransY }]
+            }
+          ]}
+        >
           <View
-            key={i}
             style={[
-              styles.dot,
-              i === currentIdx && styles.dotActive,
-              i < currentIdx && styles.dotDone,
+              styles.roleBadge,
+              isImpostor ? styles.roleBadgeImpostor : styles.roleBadgeWord
             ]}
-          />
-        ))}
-      </View>
-
-      {/* Contenido principal */}
-      <View style={styles.content}>
-        {!revealed ? (
-          <SwipeCard
-            playerName={assignment.player.name}
-            current={currentIdx + 1}
-            total={numPlayers}
-            onReveal={handleReveal}
-          />
-        ) : (
-          <Animated.View style={[styles.resultWrapper, resultStyle]}>
-            <ScrollView
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={styles.resultScroll}
+          >
+            <Ionicons
+              name={isImpostor ? 'skull-outline' : 'eye-outline'}
+              size={12}
+              color={isImpostor ? Colors.red : Colors.purple}
+            />
+            <Text
+              style={[
+                styles.roleBadgeText,
+                isImpostor
+                  ? styles.roleBadgeTextImpostor
+                  : styles.roleBadgeTextWord
+              ]}
             >
-              {/* Card resultado */}
-              <View style={[
-                styles.resultCard,
-                isImpostor ? styles.resultImpostor : styles.resultWord,
-              ]}>
-                <Text style={styles.resultEmoji}>
-                  {isImpostor ? '🕵️' : '🎯'}
-                </Text>
+              {isImpostor ? 'IMPOSTOR' : 'TU PALABRA'}
+            </Text>
+          </View>
 
-                <View style={[
-                  styles.roleBadge,
-                  isImpostor ? styles.roleBadgeImpostor : styles.roleBadgeWord,
-                ]}>
-                  <Text style={styles.roleBadgeText}>Rol secreto</Text>
-                </View>
+          <Text
+            style={[
+              styles.resultWord,
+              isImpostor ? styles.resultWordImpostor : styles.resultWordWord
+            ]}
+          >
+            {isImpostor ? 'Impostor' : currentGame.chosenWord.word}
+          </Text>
 
-                <Text style={[
-                  styles.roleTitle,
-                  isImpostor ? styles.roleTitleImpostor : styles.roleTitleWord,
-                ]}>
-                  {isImpostor ? 'Impostor' : currentGame.chosenWord.word}
-                </Text>
+          <Text style={styles.resultSub}>
+            {isImpostor
+              ? 'No conoces la palabra secreta.\n¡Finge que sí y no te descubran!'
+              : 'Esa es tu palabra. Da pistas\nsin decirla directamente.'}
+          </Text>
+        </Animated.View>
+      )}
 
-                <Text style={styles.roleSub}>
-                  {isImpostor
-                    ? 'No conoces la palabra secreta.\n¡Finge que sí y no te descubran!'
-                    : 'Da pistas sin decirla directamente\ny descubre al impostor.'}
-                </Text>
-              </View>
+      {/* Tarjeta deslizable */}
+      {!revealed && (
+        <View style={styles.cardZone}>
+          <SwipeCard onReveal={handleReveal} playerIndex={currentIdx} />
+        </View>
+      )}
 
-              {/* Botón siguiente */}
-              <TouchableOpacity style={styles.btnPrimary} onPress={handleNext}>
-                <Text style={styles.btnText}>
-                  {isLast
-                    ? '✓ Finalizar reparto'
-                    : `Siguiente: ${currentGame.assignments[currentIdx + 1]?.player.name} →`}
-                </Text>
-              </TouchableOpacity>
-            </ScrollView>
-          </Animated.View>
-        )}
-      </View>
+      {/* Botón siguiente */}
+      {revealed && (
+        <Animated.View style={[styles.btnWrap, { opacity: btnOpacity }]}>
+          <TouchableOpacity style={styles.btnPrimary} onPress={handleNext}>
+            <Ionicons name='lock-closed' size={15} color={Colors.white} />
+            <Text style={styles.btnText}>
+              {isLast ? 'Finalizar reparto' : 'Siguiente jugador'}
+            </Text>
+          </TouchableOpacity>
+        </Animated.View>
+      )}
     </View>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
-  container:          { flex: 1, backgroundColor: Colors.bg },
-  header:             { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 24, paddingTop: 20, paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: Colors.salmonPale },
-  headerLabel:        { color: Colors.textLight, fontSize: 11, textTransform: 'uppercase', letterSpacing: 1.5, fontFamily: Fonts.body },
-  headerName:         { color: Colors.text, fontSize: 22, fontFamily: Fonts.display, marginTop: 2 },
-  counter:            { backgroundColor: Colors.salmonPale, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 6 },
-  counterText:        { color: Colors.salmon, fontSize: 13, fontFamily: Fonts.bodyBold },
-  dots:               { flexDirection: 'row', gap: 6, justifyContent: 'center', paddingVertical: 12 },
-  dot:                { width: 6, height: 6, borderRadius: 3, backgroundColor: Colors.salmonPale },
-  dotActive:          { width: 20, backgroundColor: Colors.salmonDark },
-  dotDone:            { backgroundColor: Colors.salmon },
-  content:            { flex: 1, paddingHorizontal: 20, paddingVertical: 16, justifyContent: 'center' },
-  resultWrapper:      { flex: 1 },
-  resultScroll:       { flexGrow: 1, justifyContent: 'center', paddingBottom: 24 },
-  resultCard:         { borderRadius: 28, padding: 32, alignItems: 'center', gap: 12, marginBottom: 20 },
-  resultImpostor:     { backgroundColor: Colors.impostorBg, borderWidth: 2, borderColor: `${Colors.impostor}33` },
-  resultWord:         { backgroundColor: Colors.wordBg, borderWidth: 2, borderColor: `${Colors.salmonLight}66` },
-  resultEmoji:        { fontSize: SCREEN_HEIGHT * 0.07 },
-  roleBadge:          { borderRadius: 12, paddingHorizontal: 18, paddingVertical: 5 },
-  roleBadgeImpostor:  { backgroundColor: Colors.impostor },
-  roleBadgeWord:      { backgroundColor: Colors.salmon },
-  roleBadgeText:      { color: Colors.white, fontSize: 11, fontFamily: Fonts.bodyBold, letterSpacing: 2, textTransform: 'uppercase' },
-  roleTitle:          { fontSize: SCREEN_HEIGHT * 0.045, fontFamily: Fonts.display, textAlign: 'center' },
-  roleTitleImpostor:  { color: Colors.impostor },
-  roleTitleWord:      { color: Colors.salmon, textTransform: 'capitalize' },
-  roleSub:            { color: Colors.textLight, fontSize: 14, fontFamily: Fonts.body, textAlign: 'center', lineHeight: 22 },
-  btnPrimary:         { backgroundColor: Colors.salmon, borderRadius: 20, paddingVertical: 17, alignItems: 'center', shadowColor: Colors.salmon, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.38, shadowRadius: 12, elevation: 6 },
-  btnText:            { color: Colors.white, fontSize: 17, fontFamily: Fonts.display },
-});
+  container: { flex: 1, backgroundColor: Colors.bg },
+
+  // Personaje de fondo
+  bgCharacter: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: H * 0.65
+  },
+  bgCharacterImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'contain'
+  },
+
+  header: {
+    paddingHorizontal: 24,
+    paddingTop: 56,
+    paddingBottom: 12,
+    alignItems: 'center',
+    gap: 10,
+    zIndex: 10
+  },
+  greeting: {
+    color: Colors.white,
+    fontSize: 24,
+    fontFamily: Fonts.display,
+    letterSpacing: -0.5
+  },
+  dots: { flexDirection: 'row', gap: 6 },
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: Colors.purplePale
+  },
+  dotActive: { width: 20, backgroundColor: Colors.purple },
+  dotDone: { backgroundColor: Colors.purpleLight },
+
+  // Resultado
+  resultZone: {
+    position: 'absolute',
+    bottom: 120,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    paddingHorizontal: 28,
+    gap: 10,
+    zIndex: 10
+  },
+
+  roleBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 5,
+    borderWidth: 1
+  },
+  roleBadgeImpostor: {
+    backgroundColor: 'rgba(239,68,68,0.12)',
+    borderColor: 'rgba(239,68,68,0.3)'
+  },
+  roleBadgeWord: {
+    backgroundColor: 'rgba(124,58,237,0.12)',
+    borderColor: 'rgba(124,58,237,0.3)'
+  },
+  roleBadgeText: {
+    fontSize: 11,
+    fontFamily: Fonts.bodyBold,
+    letterSpacing: 1.5
+  },
+  roleBadgeTextImpostor: { color: Colors.red },
+  roleBadgeTextWord: { color: Colors.purple },
+
+  resultWord: {
+    fontSize: H * 0.06,
+    fontFamily: Fonts.display,
+    textAlign: 'center',
+    letterSpacing: -1
+  },
+  resultWordImpostor: { color: Colors.red },
+  resultWordWord: { color: Colors.white },
+  resultSub: {
+    color: Colors.textMuted,
+    fontSize: 13,
+    fontFamily: Fonts.body,
+    textAlign: 'center',
+    lineHeight: 20
+  },
+
+  // Tarjeta
+  cardZone: {
+    position: 'absolute',
+    top: 110,
+    left: 16,
+    right: 16,
+    bottom: 0
+  },
+
+  // Botón
+  btnWrap: {
+    position: 'absolute',
+    bottom: 28,
+    left: 24,
+    right: 24,
+    zIndex: 10
+  },
+  btnPrimary: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: Colors.purple,
+    borderRadius: 20,
+    paddingVertical: 18,
+    elevation: 0
+  },
+  btnText: { color: Colors.white, fontSize: 17, fontFamily: Fonts.display }
+})

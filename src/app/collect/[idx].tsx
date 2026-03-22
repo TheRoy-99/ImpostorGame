@@ -1,37 +1,46 @@
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  TextInput,
-  KeyboardAvoidingView,
-  Platform
-} from 'react-native'
-import { router, useLocalSearchParams } from 'expo-router'
-import { useState } from 'react'
-import { Colors } from '../../constants/colors'
-import { Fonts } from '../../constants/fonts'
-import { useGameStore } from '../../store/gameStore'
+  View, Text, StyleSheet, KeyboardAvoidingView,
+  Platform, TouchableOpacity, TextInput,
+} from 'react-native';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useState, useRef, useEffect } from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import { Colors } from '../../constants/colors';
+import { Fonts } from '../../constants/fonts';
+import { useGameStore } from '../../store/gameStore';
+import { AppButton } from '../../components/common/AppButton';
 
-export default function CollectWordScreen () {
-  const { idx } = useLocalSearchParams<{ idx: string }>()
-  const currentIdx = parseInt(idx ?? '0')
-  const { players, numPlayers, addWord, resetWords } = useGameStore()
-  const [input, setInput] = useState('')
+export default function CollectWordScreen() {
+  const { idx } = useLocalSearchParams<{ idx: string }>();
+  const currentIdx = parseInt(idx ?? '0');
+  const { players, addWord } = useGameStore();
+  const [focused, setFocused] = useState(false);
+  const [word, setWord] = useState('');
+  const [confirmed, setConfirmed] = useState(false);
+  const inputRef = useRef<TextInput>(null);
 
-  const currentPlayer = players[currentIdx]
-  const isLast = currentIdx + 1 >= numPlayers
+  const currentPlayer = players[currentIdx];
+  const isLast = currentIdx + 1 >= players.length;
+  const total = players.length;
+
+  useEffect(() => {
+    setWord('');
+    setConfirmed(false);
+    const timer = setTimeout(() => inputRef.current?.focus(), 600);
+    return () => clearTimeout(timer);
+  }, [currentIdx]);
 
   const handleConfirm = () => {
-    if (input.trim().length < 2) return
-    addWord({ player: currentPlayer, word: input.trim() })
-    setInput('')
-    if (isLast) {
-      router.push('/ready')
-    } else {
-      router.push(`/collect/${currentIdx + 1}`)
-    }
-  }
+    if (word.trim().length < 1) return;
+    setConfirmed(true);
+    addWord({ player: currentPlayer, word: word.trim() });
+    setTimeout(() => {
+      setWord('');
+      setConfirmed(false);
+      if (isLast) router.push('/ready');
+      else router.push(`/pass/${currentIdx + 1}` as any);
+    }, 700);
+  };
 
   return (
     <KeyboardAvoidingView
@@ -39,150 +48,90 @@ export default function CollectWordScreen () {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <View style={styles.container}>
-        {/* Dots */}
+
         <View style={styles.dots}>
-          {Array.from({ length: numPlayers }).map((_, i) => (
-            <View
-              key={i}
-              style={[
-                styles.dot,
-                i === currentIdx && styles.dotActive,
-                i < currentIdx && styles.dotDone
-              ]}
-            />
+          {Array.from({ length: total }).map((_, i) => (
+            <View key={i} style={[
+              styles.dot,
+              i === currentIdx && styles.dotActive,
+              i < currentIdx && styles.dotDone,
+            ]} />
           ))}
         </View>
 
-        <Text style={styles.emoji}>✏️</Text>
-        <Text style={styles.label}>
-          Turno {currentIdx + 1} de {numPlayers}
-        </Text>
-        <Text style={styles.title}>{currentPlayer?.name}, escribe</Text>
-        <Text style={styles.sub}>
-          tu palabra secreta — nadie más puede ver.
-        </Text>
+        <Text style={styles.greeting}>Hola, {currentPlayer?.name}</Text>
+        <Text style={styles.sub}>Escribe tu palabra secreta</Text>
 
-        <View style={styles.inputBox}>
+        <TouchableOpacity
+          activeOpacity={1}
+          onPress={() => inputRef.current?.focus()}
+          style={[
+            styles.inputBox,
+            focused && styles.inputBoxFocused,
+            confirmed && styles.inputBoxConfirmed,
+          ]}
+        >
           <TextInput
-            autoFocus
-            value={input}
-            onChangeText={setInput}
-            onSubmitEditing={handleConfirm}
-            placeholder='Ej: Volcán, Carnaval, Sushi...'
-            placeholderTextColor={Colors.textLight}
+            ref={inputRef}
+            value={confirmed ? '•'.repeat(word.length) : word}
+            onChangeText={(t) => !confirmed && setWord(t)}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
+            placeholder="Tu palabra..."
+            placeholderTextColor={Colors.textMuted}
             style={styles.input}
-            returnKeyType='done'
+            autoCorrect={false}
+            autoCapitalize="none"
+            returnKeyType="done"
+            onSubmitEditing={handleConfirm}
+            editable={!confirmed}
+            underlineColorAndroid="transparent"
+            selectionColor={Colors.purple}
+            cursorColor={Colors.purple}
           />
+        </TouchableOpacity>
+
+        {/* Hint con icono */}
+        <View style={styles.hintRow}>
+          {confirmed
+            ? <Ionicons name="checkmark-circle" size={14} color={Colors.purpleLight} />
+            : word.length > 0
+            ? <Ionicons name="eye-off-outline" size={14} color={Colors.textMuted} />
+            : <Ionicons name="lock-closed-outline" size={14} color={Colors.textMuted} />
+          }
+          <Text style={styles.hint}>
+            {confirmed
+              ? 'Guardado — pasando...'
+              : word.length > 0
+              ? 'Solo tú ves esto'
+              : 'Nadie más puede ver lo que escribes'}
+          </Text>
         </View>
 
-        <TouchableOpacity
-          style={[
-            styles.btnPrimary,
-            input.trim().length < 2 && styles.btnDisabled
-          ]}
+        <AppButton
+          label={confirmed ? 'Guardado' : isLast ? 'Empezar' : 'Confirmar'}
           onPress={handleConfirm}
-          disabled={input.trim().length < 2}
-        >
-          <Text style={styles.btnText}>
-            {isLast ? '✓ Confirmar — ¡Empezar!' : 'Confirmar y pasar →'}
-          </Text>
-        </TouchableOpacity>
+          disabled={word.trim().length < 1 || confirmed}
+        />
 
-        <TouchableOpacity
-          onPress={() => {
-            if (currentIdx === 0) {
-              resetWords()
-              router.back()
-            } else router.back()
-          }}
-        >
-          <Text style={styles.back}>← Volver</Text>
-        </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: Colors.bg },
-  container: {
-    flex: 1,
-    padding: 24,
-    alignItems: 'center',
-    justifyContent: 'center'
-  },
-  dots: { flexDirection: 'row', gap: 6, marginBottom: 32 },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: Colors.salmonPale
-  },
-  dotActive: { width: 22, backgroundColor: Colors.salmonDark },
-  dotDone: { backgroundColor: Colors.salmon },
-  emoji: { fontSize: 48, marginBottom: 12 },
-  label: {
-    color: Colors.salmonDark,
-    fontFamily: Fonts.bodyBold,
-    fontSize: 13,
-    backgroundColor: Colors.salmonPale,
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    borderRadius: 12,
-    marginBottom: 12,
-    overflow: 'hidden'
-  },
-  title: {
-    color: Colors.text,
-    fontSize: 22,
-    fontFamily: Fonts.display,
-    marginBottom: 4,
-    textAlign: 'center'
-  },
-  sub: {
-    color: Colors.textLight,
-    fontSize: 13,
-    fontFamily: Fonts.body,
-    marginBottom: 28,
-    textAlign: 'center'
-  },
-  inputBox: {
-    width: '100%',
-    backgroundColor: Colors.grayLight,
-    borderRadius: 18,
-    marginBottom: 16
-  },
-  input: {
-    width: '100%',
-    padding: 16,
-    fontSize: 18,
-    fontFamily: Fonts.display,
-    color: Colors.text,
-    textAlign: 'center'
-  },
-  btnPrimary: {
-    width: '100%',
-    backgroundColor: Colors.salmon,
-    borderRadius: 20,
-    paddingVertical: 17,
-    alignItems: 'center',
-    shadowColor: Colors.salmon,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.38,
-    shadowRadius: 12,
-    elevation: 6,
-    marginBottom: 12
-  },
-  btnDisabled: {
-    backgroundColor: Colors.salmonPale,
-    shadowOpacity: 0,
-    elevation: 0
-  },
-  btnText: { color: Colors.white, fontSize: 17, fontFamily: Fonts.display },
-  back: {
-    color: Colors.textLight,
-    fontSize: 14,
-    fontFamily: Fonts.body,
-    marginTop: 8
-  }
-})
+  flex:              { flex: 1, backgroundColor: Colors.bg },
+  container:         { flex: 1, padding: 28, alignItems: 'center', justifyContent: 'center' },
+  dots:              { flexDirection: 'row', gap: 6, marginBottom: 36 },
+  dot:               { width: 6, height: 6, borderRadius: 3, backgroundColor: Colors.purplePale },
+  dotActive:         { width: 20, backgroundColor: Colors.purple },
+  dotDone:           { backgroundColor: Colors.purpleLight },
+  greeting:          { color: Colors.white, fontSize: 28, fontFamily: Fonts.display, marginBottom: 6, letterSpacing: -0.5 },
+  sub:               { color: Colors.textMuted, fontSize: 14, fontFamily: Fonts.body, marginBottom: 28 },
+  inputBox:          { width: '100%', borderRadius: 20, borderWidth: 1.5, borderColor: Colors.bgCardBorder, marginBottom: 12, overflow: 'hidden', elevation: 0 },
+  inputBoxFocused:   { borderColor: Colors.purple },
+  inputBoxConfirmed: { borderColor: Colors.purpleLight },
+  input:             { width: '100%', paddingHorizontal: 44, paddingVertical: 18, fontSize: 20, fontFamily: Fonts.display, color: Colors.white, textAlign: 'center', textAlignVertical: 'center', letterSpacing: 2, backgroundColor: Colors.bgInput },
+  hintRow:           { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 28 },
+  hint:              { color: Colors.textMuted, fontSize: 12, fontFamily: Fonts.body },
+});

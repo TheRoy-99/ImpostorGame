@@ -1,146 +1,117 @@
-import { useEffect } from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  withTiming,
-  interpolate,
-  runOnJS,
-} from 'react-native-reanimated';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { useEffect, useRef } from 'react';
+import {
+  View, Text, StyleSheet, Dimensions,
+  Animated, PanResponder, Image,
+} from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/colors';
 import { Fonts } from '../../constants/fonts';
 
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
-const CARD_HEIGHT = SCREEN_HEIGHT * 0.55;
-const THRESHOLD = -SCREEN_HEIGHT * 0.15;
+const { height: H } = Dimensions.get('window');
+const CARD_HEIGHT = H * 0.78;
+const THRESHOLD   = -H * 0.18;
 
-interface SwipeCardProps {
-  playerName: string;
-  current: number;
-  total: number;
+const CHARACTERS = [
+  require('../../assets/characters/persona1.png'),
+  require('../../assets/characters/persona2.png'),
+  require('../../assets/characters/persona3.png'),
+  require('../../assets/characters/persona4.png'),
+  require('../../assets/characters/persona5.png'),
+];
+
+interface Props {
   onReveal: () => void;
+  playerIndex: number;
 }
 
-export function SwipeCard({ playerName, current, total, onReveal }: SwipeCardProps) {
-  const translateY = useSharedValue(0);
-  const arrowOpacity1 = useSharedValue(0.3);
-  const arrowOpacity2 = useSharedValue(0.3);
-  const arrowOpacity3 = useSharedValue(0.3);
+export function SwipeCard({ onReveal, playerIndex }: Props) {
+  const translateY = useRef(new Animated.Value(0)).current;
+  const a1 = useRef(new Animated.Value(0.2)).current;
+  const a2 = useRef(new Animated.Value(0.2)).current;
+  const a3 = useRef(new Animated.Value(0.2)).current;
 
-  // Flechas pulsando en cascada
+  const character = CHARACTERS[playerIndex % CHARACTERS.length];
+
   useEffect(() => {
-    const animate = () => {
-      arrowOpacity1.value = withTiming(1, { duration: 400 }, () => {
-        arrowOpacity1.value = withTiming(0.3, { duration: 400 });
-      });
-      setTimeout(() => {
-        arrowOpacity2.value = withTiming(1, { duration: 400 }, () => {
-          arrowOpacity2.value = withTiming(0.3, { duration: 400 });
-        });
-      }, 150);
-      setTimeout(() => {
-        arrowOpacity3.value = withTiming(1, { duration: 400 }, () => {
-          arrowOpacity3.value = withTiming(0.3, { duration: 400 });
-        });
-      }, 300);
-    };
-    animate();
-    const interval = setInterval(animate, 1200);
-    return () => clearInterval(interval);
+    const pulse = () => Animated.sequence([
+      Animated.timing(a1, { toValue: 1, duration: 350, useNativeDriver: true }),
+      Animated.parallel([
+        Animated.timing(a1, { toValue: 0.2, duration: 350, useNativeDriver: true }),
+        Animated.timing(a2, { toValue: 1, duration: 350, useNativeDriver: true }),
+      ]),
+      Animated.parallel([
+        Animated.timing(a2, { toValue: 0.2, duration: 350, useNativeDriver: true }),
+        Animated.timing(a3, { toValue: 1, duration: 350, useNativeDriver: true }),
+      ]),
+      Animated.timing(a3, { toValue: 0.2, duration: 350, useNativeDriver: true }),
+    ]).start(() => pulse());
+    pulse();
   }, []);
 
-  // Nueva API de gestos — Reanimated 3+
-  const gesture = Gesture.Pan()
-    .onUpdate((event) => {
-      if (event.translationY < 0) {
-        translateY.value = event.translationY;
-      }
-    })
-    .onEnd((event) => {
-      if (event.translationY < THRESHOLD) {
-        translateY.value = withSpring(-SCREEN_HEIGHT, {
-          damping: 20,
-          stiffness: 90,
-        });
-        runOnJS(onReveal)();
+  const panResponder = useRef(PanResponder.create({
+    onStartShouldSetPanResponder: () => true,
+    onMoveShouldSetPanResponder:  () => true,
+    onPanResponderMove: (_, g) => {
+      if (g.dy < 0) translateY.setValue(g.dy);
+    },
+    onPanResponderRelease: (_, g) => {
+      if (g.dy < THRESHOLD) {
+        Animated.spring(translateY, {
+          toValue: -H,
+          useNativeDriver: true,
+          speed: 18,
+        }).start(() => onReveal());
       } else {
-        translateY.value = withSpring(0, {
-          damping: 15,
-          stiffness: 120,
-        });
+        Animated.spring(translateY, {
+          toValue: 0,
+          useNativeDriver: true,
+          bounciness: 12,
+        }).start();
       }
-    });
-
-  const cardStyle = useAnimatedStyle(() => {
-    const progress = Math.abs(translateY.value) / SCREEN_HEIGHT;
-    return {
-      transform: [{ translateY: translateY.value }],
-      shadowOpacity: interpolate(progress, [0, 0.3], [0.08, 0.35]),
-      shadowRadius: interpolate(progress, [0, 0.3], [12, 32]),
-    };
-  });
-
-  const shimmerStyle = useAnimatedStyle(() => {
-    const progress = Math.abs(translateY.value) / SCREEN_HEIGHT;
-    return {
-      opacity: interpolate(progress, [0, 0.2], [0, 0.25]),
-      height: interpolate(progress, [0, 0.3], [0, CARD_HEIGHT * 0.5]),
-    };
-  });
-
-  const lockStyle = useAnimatedStyle(() => {
-    const progress = Math.abs(translateY.value) / SCREEN_HEIGHT;
-    return {
-      opacity: interpolate(progress, [0, 0.2], [1, 0]),
-      transform: [
-        { scale: interpolate(progress, [0, 0.2], [1, 0.7]) },
-        { translateY: interpolate(progress, [0, 0.2], [0, -20]) },
-      ],
-    };
-  });
-
-  const hintStyle = useAnimatedStyle(() => {
-    const progress = Math.abs(translateY.value) / SCREEN_HEIGHT;
-    return {
-      opacity: interpolate(progress, [0, 0.15], [1, 0]),
-    };
-  });
-
-  const arrow1Style = useAnimatedStyle(() => ({ opacity: arrowOpacity1.value }));
-  const arrow2Style = useAnimatedStyle(() => ({ opacity: arrowOpacity2.value }));
-  const arrow3Style = useAnimatedStyle(() => ({ opacity: arrowOpacity3.value }));
+    },
+  })).current;
 
   return (
-    <GestureDetector gesture={gesture}>
-      <Animated.View style={[styles.card, cardStyle]}>
+    <Animated.View
+      style={[styles.card, { transform: [{ translateY }] }]}
+      {...panResponder.panHandlers}
+    >
+      {/* Personaje */}
+      <View style={styles.characterWrap}>
+        <Image
+          source={character}
+          style={styles.character}
+        />
+        {/* Gradiente que funde el personaje con el fondo */}
+        <LinearGradient
+          colors={['transparent', 'transparent', 'rgba(10,15,30,0.6)', 'rgba(10,15,30,0.95)', '#0A0F1E']}
+          locations={[0, 0.4, 0.65, 0.82, 1]}
+          style={styles.fadeGradient}
+        />
+      </View>
 
-        {/* Shimmer al deslizar */}
-        <Animated.View style={[styles.shimmer, shimmerStyle]} />
-
-        {/* Candado */}
-        <Animated.View style={[styles.lockContainer, lockStyle]}>
-          <View style={styles.lockCircle}>
-            <Text style={styles.lockEmoji}>🔒</Text>
-          </View>
-        </Animated.View>
-
-        {/* Hint */}
-        <Animated.View style={[styles.hintContainer, hintStyle]}>
-          <Text style={styles.hintTitle}>Desliza hacia arriba</Text>
-          <Text style={styles.hintSub}>para revelar tu rol</Text>
-        </Animated.View>
-
-        {/* Flechas animadas */}
-        <View style={styles.arrowsContainer}>
-          <Animated.Text style={[styles.arrow, arrow3Style]}>↑</Animated.Text>
-          <Animated.Text style={[styles.arrow, arrow2Style]}>↑</Animated.Text>
-          <Animated.Text style={[styles.arrow, arrow1Style]}>↑</Animated.Text>
+      {/* Zona inferior con hint */}
+      <View style={styles.hintZone}>
+        <View style={styles.arrowRow}>
+          <Animated.View style={{ opacity: a1 }}>
+            <Ionicons name="chevron-up" size={18} color={Colors.purple} />
+          </Animated.View>
+          <Animated.View style={{ opacity: a2 }}>
+            <Ionicons name="chevron-up" size={18} color={Colors.purple} />
+          </Animated.View>
+          <Animated.View style={{ opacity: a3 }}>
+            <Ionicons name="chevron-up" size={18} color={Colors.purple} />
+          </Animated.View>
         </View>
-
-      </Animated.View>
-    </GestureDetector>
+        <Text style={styles.hintTitle}>Desliza hacia arriba</Text>
+        <Text style={styles.hintSub}>para ver tu rol</Text>
+        <View style={styles.lockBadge}>
+          <Ionicons name="lock-closed" size={12} color={Colors.textMuted} />
+          <Text style={styles.lockText}>Solo tú verás esto</Text>
+        </View>
+      </View>
+    </Animated.View>
   );
 }
 
@@ -148,39 +119,35 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     height: CARD_HEIGHT,
-    backgroundColor: Colors.grayLight,
+    backgroundColor: '#0A0F1E',
     borderRadius: 32,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)',
+    elevation: 0,
+    shadowOpacity: 0,
+  },
+  characterWrap: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 16,
-    shadowColor: Colors.salmon,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
-    overflow: 'hidden',
   },
-  shimmer: {
+  character: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'contain',
+  },
+  fadeGradient: {
     position: 'absolute',
-    top: 0,
+    bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: Colors.salmon,
-    borderRadius: 32,
+    height: '40%',
   },
-  lockContainer:  { alignItems: 'center' },
-  lockCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: Colors.salmonPale,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  lockEmoji:      { fontSize: 36 },
-  hintContainer:  { alignItems: 'center', gap: 4 },
-  hintTitle:      { color: Colors.textMid, fontSize: 16, fontFamily: Fonts.bodyBold },
-  hintSub:        { color: Colors.textLight, fontSize: 13, fontFamily: Fonts.body },
-  arrowsContainer:{ flexDirection: 'column', alignItems: 'center', gap: 0 },
-  arrow:          { color: Colors.salmon, fontSize: 24, fontFamily: Fonts.body },
+  hintZone:  { paddingBottom: 28, paddingTop: 4, alignItems: 'center', gap: 4 },
+  arrowRow:  { flexDirection: 'row', gap: 2, marginBottom: 2 },
+  hintTitle: { color: Colors.white, fontSize: 15, fontFamily: Fonts.bodyBold },
+  hintSub:   { color: Colors.textMuted, fontSize: 12, fontFamily: Fonts.body },
+  lockBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5, marginTop: 4 },
+  lockText:  { color: Colors.textMuted, fontSize: 11, fontFamily: Fonts.body },
 });

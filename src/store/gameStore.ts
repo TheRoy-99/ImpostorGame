@@ -1,20 +1,20 @@
-import { create } from "zustand";
-import { Player, WordEntry, Game } from "../domain/entities";
+import { create } from 'zustand';
+import { Player, WordEntry, Game } from '../domain/entities';
 
 interface GameState {
-  // Configuración
   numPlayers: number;
   numImpostors: number;
   players: Player[];
   collectedWords: WordEntry[];
   currentGame: Game | null;
+  usedWords: string[];
 
-  // Acciones
   setNumPlayers: (n: number) => void;
   setNumImpostors: (n: number) => void;
   setPlayers: (players: Player[]) => void;
   addWord: (entry: WordEntry) => void;
   setGame: (game: Game) => void;
+  addUsedWord: (word: string) => void;
   reset: () => void;
   resetWords: () => void;
 }
@@ -25,19 +25,17 @@ const initialState = {
   players: [],
   collectedWords: [],
   currentGame: null,
+  usedWords: [],
 };
 
 export const useGameStore = create<GameState>((set) => ({
   ...initialState,
-
-  setNumPlayers: (numPlayers) => set({ numPlayers }),
-  setNumImpostors: (numImpostors) => set({ numImpostors }),
-  setPlayers: (players) => set({ players }),
-  addWord: (entry) =>
-    set((state) => ({
-      collectedWords: [...state.collectedWords, entry],
-    })),
-  setGame: (currentGame) => set({ currentGame }),
-  reset: () => set(initialState),
-  resetWords: () => set({ collectedWords: [] }),
+  setNumPlayers:  (numPlayers) => set({ numPlayers }),
+  setNumImpostors:(numImpostors) => set({ numImpostors }),
+  setPlayers:     (players) => set({ players }),
+  addWord:        (entry) => set((s) => ({ collectedWords: [...s.collectedWords, entry] })),
+  setGame:        (currentGame) => set({ currentGame }),
+  addUsedWord:    (word) => set((s) => ({ usedWords: [...s.usedWords, word] })),
+  reset:          () => set(initialState),
+  resetWords:     () => set({ collectedWords: [], usedWords: [] }),
 }));

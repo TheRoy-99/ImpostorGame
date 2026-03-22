@@ -1,16 +1,26 @@
 export const Colors = {
-  bg: "#FFF5F2",
-  card: "#FFFFFF",
-  salmon: "#FA8072",
-  salmonLight: "#FBBF99",
-  salmonDark: "#E8634E",
-  salmonPale: "#FDE8E0",
-  grayLight: "#F5EDE9",
-  white: "#FFFFFF",
-  text: "#2C1810",
-  textMid: "#7A5545",
-  textLight: "#BBA89E",
-  impostor: "#E8634E",
-  impostorBg: "#FFF0EE",
-  wordBg: "#FFF8F5",
-};
+  // ── Fondos ──────────────────────────────
+  bg:             '#0A0F1E',
+  bgCard:         'rgba(255,255,255,0.05)',
+  bgCardBorder:   'rgba(255,255,255,0.10)',
+  bgInput:        'rgba(255,255,255,0.08)',
+  bgInputFocus:   'rgba(124,58,237,0.20)',
+
+  // ── Acento púrpura ───────────────────────
+  purple:         '#7C3AED',
+  purpleLight:    '#9F67FF',
+  purpleDark:     '#5B21B6',
+  purpleGlow:     'rgba(124,58,237,0.35)',
+  purplePale:     'rgba(124,58,237,0.15)',
+
+  // ── Impostor ─────────────────────────────
+  red:            '#EF4444',
+  redPale:        'rgba(239,68,68,0.15)',
+  redGlow:        'rgba(239,68,68,0.35)',
+
+  // ── Texto ────────────────────────────────
+  white:          '#FFFFFF',
+  textPrimary:    '#FFFFFF',
+  textSecondary:  '#CBD5E1',
+  textMuted:      '#64748B',
+} as const;

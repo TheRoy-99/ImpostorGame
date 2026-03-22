@@ -16,14 +16,14 @@ export default function RootLayout() {
   if (!fontsLoaded) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.bg }}>
-        <ActivityIndicator color={Colors.salmon} />
+        <ActivityIndicator color={Colors.purple} />
       </View>
     );
   }
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <StatusBar style="dark" backgroundColor={Colors.bg} />
+      <StatusBar style="light" backgroundColor={Colors.bg} />
       <Stack
         screenOptions={{
           headerShown: false,

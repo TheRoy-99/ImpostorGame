@@ -1,33 +1,45 @@
-import { Player, WordEntry, Assignment, Game } from "../entities";
+import { Player, WordEntry, Assignment, Game } from '../entities';
 
 export class BuildGameUseCase {
-  execute(players: Player[], words: WordEntry[], numImpostors: number): Game {
-    // 1. Sortear palabra al azar — silenciosamente
-    const chosen = words[Math.floor(Math.random() * words.length)];
+  execute(
+    players: Player[],
+    words: WordEntry[],
+    numImpostors: number,
+    usedWordIds: string[] = [],
+  ): Game {
+    if (!players || players.length === 0) {
+      throw new Error('No hay jugadores disponibles');
+    }
+    if (!words || words.length === 0) {
+      throw new Error('No hay palabras disponibles');
+    }
 
-    // 2. Elegir impostores al azar
-    const impostorIndices = this.pickRandom(players.length, numImpostors);
+    // Filtra palabras ya usadas
+    const available = words.filter(w => !usedWordIds.includes(w.word));
+    const pool = available.length > 0 ? available : words; // si se agotaron, recicla todas
+    const allUsed = available.length === 0;
 
-    // 3. Asignar roles
+    // Shuffle el pool y elige la primera
+    const shuffled = [...pool].sort(() => Math.random() - 0.5);
+    const chosen = shuffled[0];
+
+    // Shuffle jugadores para asignar impostores aleatoriamente
+    const shuffledIndices = Array.from({ length: players.length }, (_, i) => i)
+      .sort(() => Math.random() - 0.5);
+    const impostorSet = new Set(shuffledIndices.slice(0, numImpostors));
+
     const assignments: Assignment[] = players.map((player, i) => ({
       player,
-      role: impostorIndices.has(i) ? "impostor" : "word",
+      role: impostorSet.has(i) ? 'impostor' : 'word',
     }));
 
     return {
-      id: Date.now().toString(),
+      id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
       chosenWord: chosen,
       assignments,
       numImpostors,
       createdAt: new Date(),
+      allWordsUsed: allUsed,
     };
-  }
-
-  private pickRandom(total: number, count: number): Set<number> {
-    const set = new Set<number>();
-    while (set.size < count) {
-      set.add(Math.floor(Math.random() * total));
-    }
-    return set;
   }
 }
