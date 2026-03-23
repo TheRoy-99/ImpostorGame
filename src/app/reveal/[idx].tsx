@@ -29,11 +29,11 @@ const CHARACTERS = [
 export default function RevealScreen () {
   const { idx } = useLocalSearchParams<{ idx: string }>()
   const currentIdx = parseInt(idx ?? '0')
-  const { currentGame } = useGameStore()
+  const { currentGame, characterIndices } = useGameStore()
   const [revealed, setRevealed] = useState(false)
 
   const resultOpacity = useRef(new Animated.Value(0)).current
-  const resultTransY = useRef(new Animated.Value(20)).current
+  const resultTransY = useRef(new Animated.Value(5)).current
   const btnOpacity = useRef(new Animated.Value(0)).current
   const charOpacity = useRef(new Animated.Value(0)).current
 
@@ -47,39 +47,20 @@ export default function RevealScreen () {
   const total = currentGame.assignments.length
   const isLast = currentIdx + 1 >= total
   const isImpostor = assignment.role === 'impostor'
-  const character = CHARACTERS[currentIdx % CHARACTERS.length]
+  const character =
+    CHARACTERS[characterIndices[currentIdx] ?? currentIdx % CHARACTERS.length]
 
   const handleReveal = () => {
-    setRevealed(true)
-    Animated.sequence([
-      Animated.parallel([
-        Animated.timing(charOpacity, {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: true
-        }),
-        Animated.timing(resultOpacity, {
-          toValue: 1,
-          duration: 400,
-          useNativeDriver: true
-        }),
-        Animated.spring(resultTransY, {
-          toValue: 0,
-          useNativeDriver: true,
-          bounciness: 5
-        })
-      ]),
-      Animated.timing(btnOpacity, {
-        toValue: 1,
-        duration: 250,
-        useNativeDriver: true
-      })
-    ]).start()
-  }
+  setRevealed(true);
+  charOpacity.setValue(1);
+  resultOpacity.setValue(1);
+  resultTransY.setValue(0);
+  btnOpacity.setValue(1);
+};
 
   const handleNext = () => {
     if (isLast) router.push('/end-round')
-    else router.push(`/reveal/${currentIdx + 1}` as any) // ← directo, sin pass-reveal
+    else router.push(`/reveal/${currentIdx + 1}` as any)
   }
 
   return (
@@ -88,7 +69,6 @@ export default function RevealScreen () {
       {revealed && (
         <Animated.View style={[styles.bgCharacter, { opacity: charOpacity }]}>
           <Image source={character} style={styles.bgCharacterImage} />
-          {/* Gradiente encima del personaje */}
           <LinearGradient
             colors={[
               'rgba(10,15,30,0.3)',
@@ -130,29 +110,6 @@ export default function RevealScreen () {
             }
           ]}
         >
-          <View
-            style={[
-              styles.roleBadge,
-              isImpostor ? styles.roleBadgeImpostor : styles.roleBadgeWord
-            ]}
-          >
-            <Ionicons
-              name={isImpostor ? 'skull-outline' : 'eye-outline'}
-              size={12}
-              color={isImpostor ? Colors.red : Colors.purple}
-            />
-            <Text
-              style={[
-                styles.roleBadgeText,
-                isImpostor
-                  ? styles.roleBadgeTextImpostor
-                  : styles.roleBadgeTextWord
-              ]}
-            >
-              {isImpostor ? 'IMPOSTOR' : 'TU PALABRA'}
-            </Text>
-          </View>
-
           <Text
             style={[
               styles.resultWord,
@@ -161,7 +118,6 @@ export default function RevealScreen () {
           >
             {isImpostor ? 'Impostor' : currentGame.chosenWord.word}
           </Text>
-
           <Text style={styles.resultSub}>
             {isImpostor
               ? 'No conoces la palabra secreta.\n¡Finge que sí y no te descubran!'
@@ -170,7 +126,7 @@ export default function RevealScreen () {
         </Animated.View>
       )}
 
-      {/* Tarjeta deslizable */}
+      {/* Tarjeta con borde gradiente */}
       {!revealed && (
         <View style={styles.cardZone}>
           <SwipeCard onReveal={handleReveal} playerIndex={currentIdx} />
@@ -195,7 +151,6 @@ export default function RevealScreen () {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.bg },
 
-  // Personaje de fondo
   bgCharacter: {
     position: 'absolute',
     top: 0,
@@ -215,7 +170,8 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     alignItems: 'center',
     gap: 10,
-    zIndex: 10
+    zIndex: 10,
+    backgroundColor: Colors.bg // ← tapa la tarjeta al subir
   },
   greeting: {
     color: Colors.white,
@@ -233,7 +189,6 @@ const styles = StyleSheet.create({
   dotActive: { width: 20, backgroundColor: Colors.purple },
   dotDone: { backgroundColor: Colors.purpleLight },
 
-  // Resultado
   resultZone: {
     position: 'absolute',
     bottom: 120,
@@ -244,32 +199,6 @@ const styles = StyleSheet.create({
     gap: 10,
     zIndex: 10
   },
-
-  roleBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 5,
-    borderWidth: 1
-  },
-  roleBadgeImpostor: {
-    backgroundColor: 'rgba(239,68,68,0.12)',
-    borderColor: 'rgba(239,68,68,0.3)'
-  },
-  roleBadgeWord: {
-    backgroundColor: 'rgba(124,58,237,0.12)',
-    borderColor: 'rgba(124,58,237,0.3)'
-  },
-  roleBadgeText: {
-    fontSize: 11,
-    fontFamily: Fonts.bodyBold,
-    letterSpacing: 1.5
-  },
-  roleBadgeTextImpostor: { color: Colors.red },
-  roleBadgeTextWord: { color: Colors.purple },
-
   resultWord: {
     fontSize: H * 0.06,
     fontFamily: Fonts.display,
@@ -286,16 +215,34 @@ const styles = StyleSheet.create({
     lineHeight: 20
   },
 
-  // Tarjeta
-  cardZone: {
+  // Borde gradiente
+  cardGradientWrap: {
     position: 'absolute',
     top: 110,
     left: 16,
     right: 16,
+    bottom: 0,
+    borderRadius: 33
+  },
+  cardGradientBorder: {
+    flex: 1,
+    borderRadius: 33,
+    padding: 1.5
+  },
+  cardInner: {
+    flex: 1,
+    borderRadius: 32,
+    overflow: 'hidden'
+  },
+  cardZone: {
+    position: 'absolute',
+    top: 100,
+    left: 0,
+    right: 0,
     bottom: 0
+    // Sin bordes ni padding — ocupa todo
   },
 
-  // Botón
   btnWrap: {
     position: 'absolute',
     bottom: 28,

@@ -6,10 +6,10 @@
     "owner": "roy_m",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./src/assets/IconApp.png",
+    "icon": "./src/assets/iconAp.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./src/assets/IconApp.png",
+      "image": "./src/assets/iconAp.png",
       "resizeMode": "contain",
       "backgroundColor": "#FFF5F2"
     },

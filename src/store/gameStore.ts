@@ -8,6 +8,9 @@ interface GameState {
   collectedWords: WordEntry[];
   currentGame: Game | null;
   usedWords: string[];
+  characterIndices: number[];
+  setCharacterIndices: (indices: number[]) => void;
+
 
   setNumPlayers: (n: number) => void;
   setNumImpostors: (n: number) => void;
@@ -26,6 +29,7 @@ const initialState = {
   collectedWords: [],
   currentGame: null,
   usedWords: [],
+  characterIndices: [],
 };
 
 export const useGameStore = create<GameState>((set) => ({
@@ -38,4 +42,5 @@ export const useGameStore = create<GameState>((set) => ({
   addUsedWord:    (word) => set((s) => ({ usedWords: [...s.usedWords, word] })),
   reset:          () => set(initialState),
   resetWords:     () => set({ collectedWords: [], usedWords: [] }),
+  setCharacterIndices: (characterIndices) => set({ characterIndices }),
 }));
