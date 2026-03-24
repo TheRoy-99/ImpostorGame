@@ -61,7 +61,6 @@ export default function CollectWordScreen () {
         } = useGameStore.getState()
 
         try {
-          console.log('Building game — numImpostors:', numImpostors, 'players:', players.length);
           const game = buildGameUseCase.execute(
             players,
             collectedWords,
