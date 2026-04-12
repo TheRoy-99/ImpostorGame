@@ -9,6 +9,7 @@ interface GameState {
   currentGame: Game | null;
   usedWords: string[];
   characterIndices: number[];
+  selectedCategory: string | null;
   setCharacterIndices: (indices: number[]) => void;
 
 
@@ -20,6 +21,7 @@ interface GameState {
   addUsedWord: (word: string) => void;
   reset: () => void;
   resetWords: () => void;
+  setSelectedCategory: (category: string | null) => void;
 }
 
 const initialState = {
@@ -30,6 +32,7 @@ const initialState = {
   currentGame: null,
   usedWords: [],
   characterIndices: [],
+  selectedCategory: null,
 };
 
 export const useGameStore = create<GameState>((set) => ({
@@ -43,4 +46,5 @@ export const useGameStore = create<GameState>((set) => ({
   reset:          () => set(initialState),
   resetWords:     () => set({ collectedWords: [], usedWords: [] }),
   setCharacterIndices: (characterIndices) => set({ characterIndices }),
+  setSelectedCategory: (selectedCategory) => set({ selectedCategory }),
 }));

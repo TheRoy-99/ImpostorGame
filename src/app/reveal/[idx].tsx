@@ -19,11 +19,9 @@ import { SwipeCard } from '../../components/game/SwipeCard'
 const { height: H } = Dimensions.get('window')
 
 const CHARACTERS = [
-  require('../../assets/characters/persona1.png'),
-  require('../../assets/characters/persona2.png'),
-  require('../../assets/characters/persona3.png'),
-  require('../../assets/characters/persona4.png'),
-  require('../../assets/characters/persona5.png')
+  require('../../assets/characters/group1.png'),
+  require('../../assets/characters/group2.png'),
+  require('../../assets/characters/group3.png'),
 ]
 
 export default function RevealScreen () {
