@@ -19,11 +19,9 @@ const CARD_HEIGHT = H * 0.78
 const THRESHOLD = -H * 0.18
 
 const CHARACTERS = [
-  require('../../assets/characters/persona1.png'),
-  require('../../assets/characters/persona2.png'),
-  require('../../assets/characters/persona3.png'),
-  require('../../assets/characters/persona4.png'),
-  require('../../assets/characters/persona5.png')
+  require('../../assets/characters/group1.png'),
+  require('../../assets/characters/group2.png'),
+  require('../../assets/characters/group3.png'),
 ]
 
 interface Props {
@@ -45,40 +43,16 @@ export function SwipeCard ({ onReveal, playerIndex }: Props) {
   useEffect(() => {
     const pulse = () =>
       Animated.sequence([
-        Animated.timing(a1, {
-          toValue: 1,
-          duration: 350,
-          useNativeDriver: true
-        }),
+        Animated.timing(a1, { toValue: 1, duration: 350, useNativeDriver: true }),
         Animated.parallel([
-          Animated.timing(a1, {
-            toValue: 0.2,
-            duration: 350,
-            useNativeDriver: true
-          }),
-          Animated.timing(a2, {
-            toValue: 1,
-            duration: 350,
-            useNativeDriver: true
-          })
+          Animated.timing(a1, { toValue: 0.2, duration: 350, useNativeDriver: true }),
+          Animated.timing(a2, { toValue: 1, duration: 350, useNativeDriver: true })
         ]),
         Animated.parallel([
-          Animated.timing(a2, {
-            toValue: 0.2,
-            duration: 350,
-            useNativeDriver: true
-          }),
-          Animated.timing(a3, {
-            toValue: 1,
-            duration: 350,
-            useNativeDriver: true
-          })
+          Animated.timing(a2, { toValue: 0.2, duration: 350, useNativeDriver: true }),
+          Animated.timing(a3, { toValue: 1, duration: 350, useNativeDriver: true })
         ]),
-        Animated.timing(a3, {
-          toValue: 0.2,
-          duration: 350,
-          useNativeDriver: true
-        })
+        Animated.timing(a3, { toValue: 0.2, duration: 350, useNativeDriver: true })
       ]).start(() => pulse())
     pulse()
   }, [])
@@ -97,29 +71,13 @@ export function SwipeCard ({ onReveal, playerIndex }: Props) {
       onPanResponderRelease: (_, g) => {
         if (g.dy < THRESHOLD) {
           Animated.parallel([
-            Animated.spring(translateY, {
-              toValue: -H,
-              useNativeDriver: true,
-              speed: 18
-            }),
-            Animated.timing(fadeTop, {
-              toValue: 1,
-              duration: 200,
-              useNativeDriver: true
-            })
+            Animated.spring(translateY, { toValue: -H, useNativeDriver: true, speed: 18 }),
+            Animated.timing(fadeTop, { toValue: 1, duration: 200, useNativeDriver: true })
           ]).start(() => onReveal())
         } else {
           Animated.parallel([
-            Animated.spring(translateY, {
-              toValue: 0,
-              useNativeDriver: true,
-              bounciness: 12
-            }),
-            Animated.timing(fadeTop, {
-              toValue: 0,
-              duration: 300,
-              useNativeDriver: true
-            })
+            Animated.spring(translateY, { toValue: 0, useNativeDriver: true, bounciness: 12 }),
+            Animated.timing(fadeTop, { toValue: 0, duration: 300, useNativeDriver: true })
           ]).start()
         }
       }
@@ -132,14 +90,9 @@ export function SwipeCard ({ onReveal, playerIndex }: Props) {
       {...panResponder.panHandlers}
     >
       <View style={styles.characterWrap}>
-        <Image source={character} style={styles.character} />
+        <Image source={character} style={styles.character} resizeMethod='resize'  />
         <LinearGradient
-          colors={[
-            'transparent',
-            'transparent',
-            'rgba(10,15,30,0.7)',
-            '#0A0F1E'
-          ]}
+          colors={['transparent', 'transparent', 'rgba(10,15,30,0.7)', '#0A0F1E']}
           locations={[0, 0.45, 0.72, 1]}
           style={styles.fadeBottom}
         />
@@ -179,15 +132,25 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     height: CARD_HEIGHT,
-    backgroundColor: '#0A0F1E', // ← ligeramente más claro que el fondo
-    borderRadius:0,
+    backgroundColor: '#0A0F1E',
+    borderRadius: 0,
     overflow: 'hidden',
-    borderWidth: 0, // ← sin borde
+    borderWidth: 0,
     elevation: 0,
     shadowOpacity: 0
   },
-  characterWrap: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  character: { width: '100%', height: '100%', resizeMode: 'contain' },
+  // ← ancla desde abajo para que la cabeza nunca se corte
+  characterWrap: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'flex-end'
+  },
+  // ← altura explícita para que contain tenga espacio real
+  character: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'contain',
+  },
   fadeBottom: {
     position: 'absolute',
     bottom: 0,
@@ -202,10 +165,15 @@ const styles = StyleSheet.create({
     right: 0,
     height: '50%'
   },
-  hintZone: { paddingBottom: 28, paddingTop: 4, alignItems: 'center', gap: 4 },
+  hintZone: {
+    paddingBottom: 28,
+    paddingTop: 4,
+    alignItems: 'center',
+    gap: 4
+  },
   arrowRow: { flexDirection: 'row', gap: 2, marginBottom: 2 },
   hintTitle: { color: Colors.white, fontSize: 15, fontFamily: Fonts.bodyBold },
-  hintSub: { color: Colors.textMuted, fontSize: 12, fontFamily: Fonts.body },
+  hintSub:   { color: Colors.textMuted, fontSize: 12, fontFamily: Fonts.body },
   lockBadge: {
     flexDirection: 'row',
     alignItems: 'center',
