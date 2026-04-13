@@ -105,11 +105,9 @@ export default function HomeScreen () {
         addUsedWord(game.chosenWord.word)
         await gameRepository.saveGame(game)
 
-        const indices = Array.from({ length: resolvedPlayers.length }, () =>
-          Math.floor(Math.random() * 5)
-        )
-        setCharacterIndices(indices)
-
+        const shuffled = Array.from({ length: resolvedPlayers.length }, (_, i) => i % 3)
+        .sort(() => Math.random() - 0.5)
+        setCharacterIndices(shuffled)
         // Directo a reveal — sin pasar por pass-category
         router.push('/reveal/0' as any)
       } catch (e) {
@@ -223,7 +221,7 @@ export default function HomeScreen () {
         </View>
         <Text style={styles.modeHint}>
           {gameMode === 'classic'
-            ? 'Cada jugador escribe su propia palabra secreta'
+            ? 'En clásico cada jugador escribe su propia palabra secreta'
             : 'Acuerden una categoría — el sistema asigna la palabra a cada uno'}
         </Text>
       </View>
@@ -258,7 +256,7 @@ export default function HomeScreen () {
             })}
           </View>
           {!pickedCategory && (
-            <View style={styles.hintRow}>
+            <View style={[styles.hintRow, { marginTop: 8 }]}>
               <Ionicons name='information-circle-outline' size={13} color={Colors.textMuted} />
               <Text style={styles.hint}>Elige una categoría para continuar</Text>
             </View>
@@ -355,4 +353,5 @@ const styles = StyleSheet.create({
   },
   btnDisabled: { backgroundColor: Colors.purplePale },
   btnText:     { color: Colors.white, fontSize: 17, fontFamily: Fonts.display },
+  
 })

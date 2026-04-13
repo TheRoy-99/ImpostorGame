@@ -72,9 +72,9 @@ export default function CollectWordScreen () {
           await gameRepository.saveGame(game)
           // Va directo al primer reveal — sin pantalla "Todo listo"
           const totalPlayers = players.length
-          const indices = Array.from({ length: totalPlayers }, () =>
-            Math.floor(Math.random() * 5)
-          )
+          const indices = Array.from({ length: totalPlayers }, (_, i) => i % 3)
+          .sort(() => Math.random() - 0.5)
+          
           useGameStore.getState().setCharacterIndices(indices)
           router.push('/reveal/0' as any)
         } catch (e) {
