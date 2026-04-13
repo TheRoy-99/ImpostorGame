@@ -4,7 +4,7 @@
     "slug": "impostor-app",
     "scheme": "impostor",
     "owner": "roy_m",
-    "version": "1.2.0",
+    "version": "1.2.1",
     "orientation": "portrait",
     "icon": "./src/assets/ic_launcher.png",
     "userInterfaceStyle": "dark",
