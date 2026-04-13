@@ -4,7 +4,7 @@
     "slug": "impostor-app",
     "scheme": "impostor",
     "owner": "roy_m",
-    "version": "1.2.0",
+    "version": "1.2.1",
     "orientation": "portrait",
     "icon": "./src/assets/ic_launcher.png",
     "userInterfaceStyle": "dark",
@@ -35,6 +35,9 @@
       "eas": {
         "projectId": "27182487-eef8-4b68-9c49-e535e878bb70"
       }
-    }
+    },
+    "plugins": [
+      "expo-router"
+    ]
   }
 }
